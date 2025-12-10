@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'daily_visit_target',
     ];
 
     /**
@@ -44,5 +47,28 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    /**
+     * Relasi: Satu Sales punya BANYAK Order
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Relasi: Satu Sales punya BANYAK Visit (Kunjungan)
+     */
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
+
+    /**
+     * Relasi: Satu Sales punya BANYAK Customer (Toko Miliknya)
+     */
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
     }
 }

@@ -4,113 +4,130 @@
 
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-8">
 
         <div class="card shadow border-0">
             <div class="card-header bg-primary text-white py-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill"></i> Check-in Visit</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill"></i> Form Check-in</h5>
             </div>
             <div class="card-body">
 
-                <form action="{{ route('visits.store') }}" method="POST" enctype="multipart/form-data" id="visitForm">
+                <form action="{{ route('visits.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Pilih Toko / Pelanggan</label>
-                        <select name="customer_id" class="form-select form-select-lg" required>
-                            <option value="">-- Cari Nama Toko --</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <ul class="nav nav-pills nav-fill mb-4 gap-2" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active border" id="pills-existing-tab" data-bs-toggle="pill" data-bs-target="#pills-existing" type="button" onclick="setMode('existing')">
+                                <i class="bi bi-shop"></i> Toko Langganan
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link border" id="pills-new-tab" data-bs-toggle="pill" data-bs-target="#pills-new" type="button" onclick="setMode('new')">
+                                <i class="bi bi-plus-circle"></i> Toko Baru
+                            </button>
+                        </li>
+                    </ul>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Lokasi Anda</label>
+                    <input type="hidden" name="type" id="inputType" value="existing">
 
-                        <div class="input-group mb-2">
-                            <span class="input-group-text bg-light"><i class="bi bi-geo"></i></span>
-                            <input type="text" id="locationDisplay" class="form-control" placeholder="Koordinat belum diambil" readonly>
+                    <div class="tab-content mb-4" id="pills-tabContent">
+
+                        <div class="tab-pane fade show active" id="pills-existing">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Cari Nama Toko</label>
+                                <select name="customer_id" class="form-select form-select-lg">
+                                    <option value="">-- Pilih Toko --</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->address }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
-                        <input type="hidden" name="latitude" id="lat">
-                        <input type="hidden" name="longitude" id="long">
+                        <div class="tab-pane fade" id="pills-new">
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle"></i> Toko ini akan otomatis tersimpan ke Master Data.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Toko Baru</label>
+                                <input type="text" name="new_name" class="form-control" placeholder="Contoh: TB. Barokah Jaya">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">No. HP / WA</label>
+                                    <input type="text" name="new_phone" class="form-control" placeholder="0812...">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Pemilik (Opsional)</label>
+                                    <input type="text" name="new_contact" class="form-control">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Alamat Lengkap</label>
+                                <textarea name="new_address" class="form-control" rows="2" placeholder="Jalan, Desa, Kecamatan..."></textarea>
+                            </div>
+                        </div>
+                    </div>
 
-                        <button type="button" onclick="getLocation()" class="btn btn-outline-primary w-100" id="btnGetLoc">
-                            <i class="bi bi-crosshair"></i> Ambil Lokasi Saya
-                        </button>
-                        <small class="text-danger d-none" id="gpsError">Gagal mengambil lokasi. Pastikan GPS aktif.</small>
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Lokasi GPS</label>
+                            <div class="input-group mb-2">
+                                <button type="button" onclick="getLocation()" class="btn btn-outline-primary" id="btnGetLoc">
+                                    <i class="bi bi-crosshair"></i> Ambil
+                                </button>
+                                <input type="text" id="locationDisplay" class="form-control" readonly placeholder="Wajib diambil">
+                            </div>
+                            <input type="hidden" name="latitude" id="lat">
+                            <input type="hidden" name="longitude" id="long">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Bukti Foto</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*" capture="environment" required>
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Bukti Foto</label>
-                        <input type="file" name="photo" class="form-control" accept="image/*" capture="environment" required>
-                        <div class="form-text">Wajib foto tampak depan toko / selfie dengan pemilik.</div>
+                        <label class="form-label">Laporan Hasil</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Hasil kunjungan..."></textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Laporan Hasil</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Contoh: Pemilik minta kirim sampel keramik baru..."></textarea>
-                    </div>
-
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                            <i class="bi bi-send-check"></i> Simpan Kunjungan
-                        </button>
+                    <div class="d-grid mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Simpan Kunjungan</button>
                     </div>
 
                 </form>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
+    function setMode(mode) {
+        document.getElementById('inputType').value = mode;
+    }
+
     function getLocation() {
         const btn = document.getElementById('btnGetLoc');
         const display = document.getElementById('locationDisplay');
-        const gpsError = document.getElementById('gpsError');
-
-        // Ubah tombol jadi loading
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sedang mencari satelit...';
-        btn.disabled = true;
+        btn.innerHTML = '...';
 
         if (navigator.geolocation) {
-            // Tambahkan parameter ketiga: options
-            navigator.geolocation.getCurrentPosition(showPosition, showError, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            });
-        } else {
-            display.value = "Browser tidak support GPS.";
-        }
-    }
-
-    function showPosition(position) {
-        // Isi input hidden
-        document.getElementById('lat').value = position.coords.latitude;
-        document.getElementById('long').value = position.coords.longitude;
-
-        // Tampilkan di layar agar user tau sukses
-        document.getElementById('locationDisplay').value =
-            position.coords.latitude + ", " + position.coords.longitude;
-
-        // Kembalikan tombol jadi hijau
-        const btn = document.getElementById('btnGetLoc');
-        btn.className = "btn btn-success w-100";
-        btn.innerHTML = '<i class="bi bi-check-circle"></i> Lokasi Terkunci';
-        document.getElementById('gpsError').classList.add('d-none');
-    }
-
-    function showError(error) {
-        const btn = document.getElementById('btnGetLoc');
-        btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Coba Lagi';
-        btn.disabled = false;
-
-        document.getElementById('gpsError').classList.remove('d-none');
-        alert("Gagal mengambil lokasi. Pastikan izin lokasi browser diizinkan!");
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('lat').value = pos.coords.latitude;
+                    document.getElementById('long').value = pos.coords.longitude;
+                    display.value = pos.coords.latitude + ", " + pos.coords.longitude;
+                    btn.className = "btn btn-success";
+                    btn.innerHTML = '<i class="bi bi-check"></i>';
+                },
+                (err) => { alert("Gagal ambil lokasi."); btn.innerHTML = 'Ulang'; },
+                { enableHighAccuracy: true }
+            );
+        } else { alert("Browser tidak support GPS."); }
     }
 </script>
 @endsection

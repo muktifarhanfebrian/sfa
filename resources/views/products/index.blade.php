@@ -58,7 +58,7 @@
                                         class="btn btn-sm btn-warning me-1">
                                         <i class="bi bi-pencil-square"></i> Edit
                                     </a>
-
+                                    
                                     <form action="{{ route('products.destroy', $product->id) }}" method="POST"
                                         class="d-inline"
                                         onsubmit="return confirm('Yakin ingin menghapus produk ini? Data tidak bisa dikembalikan.');">

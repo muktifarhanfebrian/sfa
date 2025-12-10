@@ -10,38 +10,46 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Akun Admin (Bisa akses semua menu)
+        // 1. Super Admin
         DB::table('users')->insert([
             'name' => 'Super Admin',
             'email' => 'admin@bintang.com',
             'role' => 'admin',
-            'phone' => '081200001111',
-            'password' => Hash::make('password'), // Passwordnya: password
-            'created_at' => now(),
-            'updated_at' => now(),
+            'phone' => '081100001111',
+            'password' => Hash::make('password'),
+            'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        // 2. Akun Manager (Bisa lihat laporan)
+        // 2. Manager (Bisa lihat grafik)
         DB::table('users')->insert([
             'name' => 'Pak Budi Manager',
             'email' => 'manager@bintang.com',
             'role' => 'manager',
-            'phone' => '081200002222',
+            'phone' => '081100002222',
             'password' => Hash::make('password'),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        // 3. Akun Sales (Hanya bisa input order & kunjungan)
+        // 3. Sales A (Andi - Rajin)
         DB::table('users')->insert([
-            'name' => 'Andi Sales',
-            'email' => 'sales@bintang.com',
+            'name' => 'Andi Sales (Area Kota)',
+            'email' => 'andi@bintang.com',
             'role' => 'sales',
             'phone' => '081200003333',
+            'daily_visit_target' => 5,
             'password' => Hash::make('password'),
-            'created_at' => now(),
-            'updated_at' => now(),
-            'daily_visit_target' => 5, // Target 5 toko per hari
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        // 4. Sales B (Budi - Area Luar)
+        DB::table('users')->insert([
+            'name' => 'Budi Sales (Area Barat)',
+            'email' => 'budi@bintang.com',
+            'role' => 'sales',
+            'phone' => '081200004444',
+            'daily_visit_target' => 5,
+            'password' => Hash::make('password'),
+            'created_at' => now(), 'updated_at' => now(),
         ]);
     }
 }

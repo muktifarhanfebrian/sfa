@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class OrderController extends Controller
 {
@@ -47,7 +48,19 @@ class OrderController extends Controller
             // C. Buat Nomor Invoice Otomatis (Contoh: INV-20231001-0001)
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . mt_rand(1000, 9999);
 
-            // D. Simpan Header Order
+            // --- LOGIKA BARU: HITUNG JATUH TEMPO (TOP) ---
+            $customer = Customer::findOrFail($request->customer_id);
+            $topDays = $customer->top_days ?? 0; // Ambil settingan TOP toko
+
+            // Kalau TOP 0, berarti jatuh tempo hari ini (Cash)
+            // Kalau TOP 30, berarti hari ini + 30 hari
+            $dueDate = now()->addDays($topDays);
+
+            // Default status bayar: Kalau TOP 0 dianggap Cash (Paid?), atau tetap Unpaid tunggu konfirmasi kasir?
+            // Aman-nya kita set 'unpaid' dulu sampai uang diterima.
+            // ---------------------------------------------
+
+            // D. Simpan Header Order (Update array create)
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'customer_id' => $request->customer_id,
@@ -55,6 +68,11 @@ class OrderController extends Controller
                 'total_price' => $totalPrice,
                 'status' => 'pending',
                 'notes' => $request->notes,
+
+                // Tambahan Field Baru:
+                'payment_status' => 'unpaid',
+                'due_date' => $dueDate,
+                'amount_paid' => 0,
             ]);
 
             // E. Simpan Detail Item & Kurangi Stok
@@ -88,13 +106,30 @@ class OrderController extends Controller
     }
 
     // 3. Menampilkan Daftar Order (Riwayat)
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil data order, urutkan dari yang terbaru
-        // Kita gunakan 'with' (Eager Loading) agar query ke Customer dan User lebih hemat
-        $orders = Order::with(['customer', 'user'])->latest()->paginate(10);
+        // 1. Ambil List Sales untuk Dropdown Filter
+        $salesList = User::where('role', 'sales')->orderBy('name')->get();
 
-        return view('orders.index', compact('orders'));
+        // 2. Mulai Query (PERBAIKAN DISINI)
+        $query = Order::with(['customer', 'user']);
+
+        // 3. Cek Role User Login
+        if (Auth::user()->role === 'sales') {
+            // SALES: Hanya lihat order milik sendiri
+            $query->where('user_id', Auth::id());
+        } else {
+            // ADMIN: Cek apakah ada Filter dari Dropdown?
+            if ($request->has('sales_id') && $request->sales_id != '') {
+                $query->where('user_id', $request->sales_id);
+            }
+        }
+
+        // 4. Ambil Data
+        $orders = $query->latest()->paginate(10);
+
+        // 5. Kirim ke View
+        return view('orders.index', compact('orders', 'salesList'));
     }
 
     // 4. Menampilkan Detail Order (Nota)
@@ -115,5 +150,31 @@ class OrderController extends Controller
         }
 
         return back()->with('error', 'Order ini sudah diproses sebelumnya.');
+    }
+    // 6. Fitur Pembayaran / Pelunasan
+    public function pay(Request $request, Order $order)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        // 1. Tambahkan pembayaran baru ke yang sudah ada
+        $newAmountPaid = $order->amount_paid + $request->amount;
+
+        // 2. Tentukan status
+        if ($newAmountPaid >= $order->total_price) {
+            $status = 'paid';
+            // Opsional: Kalau bayar kelebihan, bisa ditangani di sini (misal simpan sisa sebagai deposit)
+        } else {
+            $status = 'partial';
+        }
+
+        // 3. Update Order
+        $order->update([
+            'amount_paid' => $newAmountPaid,
+            'payment_status' => $status
+        ]);
+
+        return back()->with('success', 'Pembayaran berhasil dicatat! Sisa tagihan diperbarui.');
     }
 }

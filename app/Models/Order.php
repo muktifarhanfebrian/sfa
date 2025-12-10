@@ -8,6 +8,24 @@ class Order extends Model
 {
     protected $guarded = ['id']; // Semua boleh diisi kecuali ID
 
+    protected $fillable = [
+        'user_id',
+        'customer_id',
+        'invoice_number',
+        'total_price',
+        'status',
+        'notes',
+        // Tambahan baru:
+        'payment_status',
+        'due_date',
+        'amount_paid',
+    ];
+
+    // Tambahkan ini agar due_date dibaca sebagai tanggal (Carbon)
+    protected $casts = [
+        'due_date' => 'date',
+    ];
+
     // Relasi: 1 Order dimiliki 1 Customer
     public function customer()
     {

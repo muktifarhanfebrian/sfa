@@ -29,7 +29,7 @@
 
             <div class="row border-bottom pb-4 mb-4">
                 <div class="col-md-6">
-                    <h3 class="fw-bold text-primary">INVOICE</h3>
+                    <h3 class="fw-bold text-primary">ORDER</h3>
                     <p class="text-muted mb-0">No: <strong>{{ $order->invoice_number }}</strong></p>
                     <p class="text-muted mb-0">Tgl: {{ $order->created_at->format('d F Y') }}</p>
                     <p class="mb-0 mt-2">
@@ -38,8 +38,8 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <h5 class="fw-bold">Bintang Interior & Keramik</h5>
-                    <p class="mb-0 text-muted">Jl. Meulaboh - Tapaktuan</p>
-                    <p class="mb-0 text-muted">Aceh Barat, Indonesia</p>
+                    <p class="mb-0 text-muted">jl. Teuku Iskandar, Ceurih, Ulee Kareng </p>
+                    <p class="mb-0 text-muted">Kota Banda Aceh, Indonesia</p>
                     <p class="mb-0 text-muted">Telp: 0812-3456-7890</p>
                 </div>
             </div>
