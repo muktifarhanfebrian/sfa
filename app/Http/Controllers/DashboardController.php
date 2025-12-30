@@ -61,7 +61,7 @@ class DashboardController extends Controller
         // ===================================================
         // A. LOGIKA KHUSUS SALES
         // ===================================================
-        if ($role === 'sales') {
+        if ($role === 'sales_field' || $role === 'sales_store') {
             // 1. Target Omset
             $target = $user->monthly_sales_target ?? 0;
 
@@ -123,8 +123,8 @@ class DashboardController extends Controller
         // ===================================================
         else {
             // --- LOGIC DROPDOWN SALES (Untuk Modal Edit Target di Manager) ---
-            $allSales = User::where('role', 'sales')->get();
-
+            $allSales = User::whereIn('role', ['sales_field', 'sales_store'])
+                ->get();
             // Logic Dashboard Manager lihat Sales tertentu (Opsional)
             if (request('sales_id') && in_array($user->role, ['manager_bisnis', 'manager_operasional'])) {
                 $salesUser = User::find(request('sales_id'));
@@ -200,7 +200,7 @@ class DashboardController extends Controller
 
             // 6. Top Sales (Leaderboard)
             if (in_array($role, ['manager_operasional', 'manager_bisnis'])) {
-                $topSales = User::where('role', 'sales')
+                $topSales = User::where('role', ['sales_field', 'sales_store'])
                     ->withCount(['visits' => function ($q) {
                         $q->whereMonth('created_at', date('m'));
                     }])
@@ -237,7 +237,7 @@ class DashboardController extends Controller
         // Logika Pintar:
         // Kalau Manager -> Lihat omset TOTAL Perusahaan
         // Kalau Sales   -> Lihat omset DIA SENDIRI (Biar tau performa pribadi)
-        if ($user->role == 'sales') {
+        if ($user->role == ['sales_field', 'sales_store']) {
             $chartQuery->where('user_id', $user->id);
         }
 
@@ -255,7 +255,7 @@ class DashboardController extends Controller
         // ==========================================================
         // PENTING: Ini kita buka untuk SEMUA ROLE biar Sales bisa lihat saingannya
 
-        $topSales = \App\Models\User::where('role', 'sales') // Ambil hanya user sales
+        $topSales = \App\Models\User::where('role', ['sales_field', 'sales_store']) // Ambil hanya user sales
             ->withSum(['orders' => function ($q) {
                 $q->where('payment_status', 'paid'); // Hitung total order lunas
             }], 'total_price')
