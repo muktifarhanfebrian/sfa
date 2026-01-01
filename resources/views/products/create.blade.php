@@ -77,12 +77,15 @@
                                         class="form-control @error('price') is-invalid @enderror"
                                         value="{{ old('price') }}">
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold text-danger">Harga Diskon (Opsional)</label>
-                                    <input type="number" name="discount_price" min="0" class="form-control"
-                                        placeholder="Kosongkan jika tidak diskon">
-                                    <small class="text-muted">Harga ini yang akan dipakai saat transaksi jika diisi.</small>
-                                </div>
+                                @if (Auth::user()->role === 'purchase')
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-danger">Harga Diskon (Opsional)</label>
+                                        <input type="number" name="discount_price" min="0" class="form-control"
+                                            placeholder="Kosongkan jika tidak diskon">
+                                        <small class="text-muted">Harga ini yang akan dipakai saat transaksi jika
+                                            diisi.</small>
+                                    </div>
+                                @endif
                             </div>
 
                             @error('price')
@@ -104,7 +107,8 @@
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
-                            <small class="text-muted me-auto align-self-center">Catatan: Produk baru akan ditinjau oleh Kepala Gudang.</small>
+                            <small class="text-muted me-auto align-self-center">Catatan: Produk baru akan ditinjau oleh
+                                Kepala Gudang.</small>
                             <a href="{{ route('products.index') }}" class="btn btn-secondary me-2">Batal</a>
                             <button type="submit" class="btn btn-primary">Simpan Produk</button>
                         </div>
@@ -118,53 +122,55 @@
 @endsection
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const gudangSelect = document.getElementById('lokasi_gudang');
-        const gateSelect = document.getElementById('gate');
-        const blockSelect = document.getElementById('block');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gudangSelect = document.getElementById('lokasi_gudang');
+            const gateSelect = document.getElementById('gate');
+            const blockSelect = document.getElementById('block');
 
-        gudangSelect.addEventListener('change', function () {
-            const lokasi_gudang = this.value;
-            gateSelect.innerHTML = '<option value="">Loading...</option>';
-            gateSelect.disabled = true;
-            blockSelect.innerHTML = '<option value="">-- Pilih Gate Dulu --</option>';
-            blockSelect.disabled = true;
-
-            if (lokasi_gudang) {
-                fetch(`/ajax/gates/${lokasi_gudang}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        gateSelect.innerHTML = '<option value="">-- Pilih Gate --</option>';
-                        data.forEach(gate => {
-                            gateSelect.innerHTML += `<option value="${gate.id}">${gate.name}</option>`;
-                        });
-                        gateSelect.disabled = false;
-                    });
-            } else {
-                gateSelect.innerHTML = '<option value="">-- Pilih Gudang Dulu --</option>';
-            }
-        });
-
-        gateSelect.addEventListener('change', function () {
-            const gate = this.value;
-            blockSelect.innerHTML = '<option value="">Loading...</option>';
-            blockSelect.disabled = true;
-
-            if (gate) {
-                fetch(`/ajax/blocks/${gate}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        blockSelect.innerHTML = '<option value="">-- Pilih Block --</option>';
-                        data.forEach(block => {
-                            blockSelect.innerHTML += `<option value="${block.id}">${block.name}</option>`;
-                        });
-                        blockSelect.disabled = false;
-                    });
-            } else {
+            gudangSelect.addEventListener('change', function() {
+                const lokasi_gudang = this.value;
+                gateSelect.innerHTML = '<option value="">Loading...</option>';
+                gateSelect.disabled = true;
                 blockSelect.innerHTML = '<option value="">-- Pilih Gate Dulu --</option>';
-            }
+                blockSelect.disabled = true;
+
+                if (lokasi_gudang) {
+                    fetch(`/ajax/gates/${lokasi_gudang}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            gateSelect.innerHTML = '<option value="">-- Pilih Gate --</option>';
+                            data.forEach(gate => {
+                                gateSelect.innerHTML +=
+                                    `<option value="${gate.id}">${gate.name}</option>`;
+                            });
+                            gateSelect.disabled = false;
+                        });
+                } else {
+                    gateSelect.innerHTML = '<option value="">-- Pilih Gudang Dulu --</option>';
+                }
+            });
+
+            gateSelect.addEventListener('change', function() {
+                const gate = this.value;
+                blockSelect.innerHTML = '<option value="">Loading...</option>';
+                blockSelect.disabled = true;
+
+                if (gate) {
+                    fetch(`/ajax/blocks/${gate}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            blockSelect.innerHTML = '<option value="">-- Pilih Block --</option>';
+                            data.forEach(block => {
+                                blockSelect.innerHTML +=
+                                    `<option value="${block.id}">${block.name}</option>`;
+                            });
+                            blockSelect.disabled = false;
+                        });
+                } else {
+                    blockSelect.innerHTML = '<option value="">-- Pilih Gate Dulu --</option>';
+                }
+            });
         });
-    });
-</script>
+    </script>
 @endpush

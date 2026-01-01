@@ -32,7 +32,7 @@ class DashboardController extends Controller
         }
 
         // 3. GUDANG (Kepala & Admin)
-        if (in_array($role, ['kepala_gudang', 'admin_gudang'])) {
+        if (in_array($role, ['kepala_gudang', 'admin_gudang', 'purchase'])) {
             return $this->dashboardGudang($user);
         }
 
@@ -42,7 +42,7 @@ class DashboardController extends Controller
         }
 
         // Default Fallback
-        return view('dashboard.index_non_sales', compact('user'));
+        abort(403, 'Role Anda tidak memiliki dashboard yang terdaftar.');
     }
 
     /**
