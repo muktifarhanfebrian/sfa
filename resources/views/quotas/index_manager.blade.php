@@ -41,7 +41,7 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label>Jumlah Diminta (Rp)</label>
-                                <input type="number" name="amount" class="form-control" required placeholder="Contoh: 100000000">
+                                <input type="number" name="amount" min="1" class="form-control" required placeholder="Contoh: 100000000">
                             </div>
                             <div class="mb-3">
                                 <label>Alasan</label>

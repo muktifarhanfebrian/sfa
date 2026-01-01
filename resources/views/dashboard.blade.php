@@ -352,7 +352,7 @@
                                             <label class="form-label fw-bold">Target Baru (Rupiah)</label>
                                             <div class="input-group">
                                                 <span class="input-group-text">Rp</span>
-                                                <input type="number" name="target" class="form-control"
+                                                <input type="number" name="target" min="1" class="form-control"
                                                     placeholder="Contoh: 50000000" required>
                                             </div>
                                             <div class="form-text">Masukkan angka saja tanpa titik/koma.</div>
@@ -622,7 +622,7 @@
                                     <div class="modal-body">
                                         <div class="mb-3">
                                             <label>Jumlah (Rp)</label>
-                                            <input type="number" name="amount" class="form-control" required>
+                                            <input type="number" name="amount" min="1" class="form-control" required>
                                         </div>
                                         <div class="mb-3">
                                             <label>Alasan</label>

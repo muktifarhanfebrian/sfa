@@ -31,7 +31,7 @@
                         @csrf
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Jumlah Diminta (Rp)</label>
-                            <input type="number" name="amount" class="form-control" required placeholder="Contoh: 5000000">
+                            <input type="number" name="amount" min="1" class="form-control" required placeholder="Contoh: 5000000">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Alasan</label>

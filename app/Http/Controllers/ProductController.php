@@ -81,8 +81,8 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:products,name',
             'category' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
             'lokasi_gudang' => 'nullable',
             'gate' => 'nullable',
             'block' => 'nullable',
@@ -132,8 +132,9 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required',
             'category' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lt:price',
+            'stock' => 'required|integer|min:0',
             'lokasi_gudang' => 'nullable',
             'gate' => 'nullable',
             'block' => 'nullable',
@@ -231,6 +232,12 @@ class ProductController extends Controller
         if (!in_array(Auth::user()->role, ['purchase', 'manager_operasional', 'manager_bisnis', 'kepala_gudang'])) {
             abort(403);
         }
+
+        $request->validate([
+            // Pastikan tanggal yang diinput adalah hari ini atau masa depan (tidak boleh tanggal lampau)
+            // 'after_or_equal:today' adalah kuncinya
+            'restock_date' => 'required|date|after_or_equal:today',
+        ]);
 
         $product = Product::findOrFail($id);
         $product->update([

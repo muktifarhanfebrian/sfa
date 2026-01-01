@@ -10,7 +10,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Jumlah (Rp)</label>
-                        <input type="number" name="amount" class="form-control" required placeholder="0">
+                        <input type="number" name="amount" min="1" class="form-control" required placeholder="0">
                     </div>
                     <div class="mb-3">
                         <label>Alasan</label>

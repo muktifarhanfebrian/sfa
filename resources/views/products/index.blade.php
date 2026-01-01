@@ -250,7 +250,7 @@
                                     <form action="{{ route('products.updateDiscount', $product->id) }}" method="POST"
                                         class="d-flex gap-1">
                                         @csrf
-                                        <input type="number" name="discount_price"
+                                        <input type="number" name="discount_price" min="0"
                                             class="form-control form-control-sm border-danger text-danger fw-bold"
                                             value="{{ $product->discount_price == 0 ? '' : $product->discount_price }}"
                                             placeholder="No Disc">

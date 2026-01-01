@@ -37,7 +37,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Stok Awal</label>
-                                <input type="number" name="stock"
+                                <input type="number" name="stock" min="0"
                                     class="form-control @error('stock') is-invalid @enderror" value="{{ old('stock') }}">
                                 @error('stock')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -73,13 +73,13 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Harga Normal</label>
-                                    <input type="number" name="price"
+                                    <input type="number" name="price" min="0"
                                         class="form-control @error('price') is-invalid @enderror"
                                         value="{{ old('price') }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold text-danger">Harga Diskon (Opsional)</label>
-                                    <input type="number" name="discount_price" class="form-control"
+                                    <input type="number" name="discount_price" min="0" class="form-control"
                                         placeholder="Kosongkan jika tidak diskon">
                                     <small class="text-muted">Harga ini yang akan dipakai saat transaksi jika diisi.</small>
                                 </div>
