@@ -29,8 +29,8 @@ class ApprovalController extends Controller
         if ($user->role === 'manager_bisnis') {
             $query->where(function ($q) {
                 $q->where('model_type', 'like', '%Order%')
-                  ->orWhere('model_type', 'like', '%PaymentLog%')
-                  ->orWhere('model_type', 'like', '%Customer%');
+                    ->orWhere('model_type', 'like', '%PaymentLog%')
+                    ->orWhere('model_type', 'like', '%Customer%');
             });
         } elseif ($user->role === 'kepala_gudang') {
             $query->where('model_type', 'like', '%Product%');
@@ -43,25 +43,29 @@ class ApprovalController extends Controller
     }
 
     // --- Menggunakan Helper Private untuk mengurangi duplikasi code ---
-    public function transaksi() {
+    public function transaksi()
+    {
         $this->authorizeRole(['manager_bisnis', 'manager_operasional']);
         $approvals = $this->getPendingApprovals('Order');
         return view('approvals.transaksi', compact('approvals'));
     }
 
-    public function piutang() {
+    public function piutang()
+    {
         $this->authorizeRole(['manager_bisnis', 'manager_operasional']);
         $approvals = $this->getPendingApprovals('PaymentLog');
         return view('approvals.piutang', compact('approvals'));
     }
 
-    public function customer() {
+    public function customer()
+    {
         $this->authorizeRole(['manager_bisnis', 'manager_operasional']);
         $approvals = $this->getPendingApprovals('Customer');
         return view('approvals.customers', compact('approvals'));
     }
 
-    public function produk() {
+    public function produk()
+    {
         $this->authorizeRole(['kepala_gudang', 'manager_operasional']);
         $approvals = $this->getPendingApprovals('Product');
         return view('approvals.products', compact('approvals'));
@@ -184,7 +188,6 @@ class ApprovalController extends Controller
 
             DB::commit();
             return back()->with('success', 'Permintaan telah DISETUJUI.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error System: ' . $e->getMessage());
@@ -220,14 +223,17 @@ class ApprovalController extends Controller
             if ($approval->action === 'approve_order') {
                 $order = Order::find($approval->model_id);
                 if ($order) {
-                    $order->update(['status' => 'rejected']);
+                    $order->update([
+                        'status' => 'rejected',
+                        'rejection_note' => $request->reason
+                    ]);
                     foreach ($order->items as $item) {
                         $item->product->increment('stock', $item->quantity);
                     }
                 }
             } elseif ($approval->action === 'approve_payment') {
                 PaymentLog::where('id', $approval->model_id)->update(['status' => 'rejected']);
-            // [TAMBAHAN BARU] Reject Customer Baru
+                // [TAMBAHAN BARU] Reject Customer Baru
             } elseif ($approval->model_type == \App\Models\Customer::class && $approval->action == 'create') {
                 if ($approval->approveable) {
                     $approval->approveable->update(['status' => 'rejected']);
@@ -378,26 +384,29 @@ class ApprovalController extends Controller
     // 4. PRIVATE HELPERS (Untuk mengurangi duplikasi kode)
     // =========================================================================
 
-    private function authorizeRole($roles) {
+    private function authorizeRole($roles)
+    {
         if (!in_array(Auth::user()->role, $roles)) abort(403, 'Akses Ditolak');
     }
 
-    private function getPendingApprovals($modelName) {
+    private function getPendingApprovals($modelName)
+    {
         return Approval::where('model_type', 'like', "%$modelName%")
             ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
-    private function applyHistoryFilter($query, $user, $search) {
+    private function applyHistoryFilter($query, $user, $search)
+    {
         // Filter Role
         if ($user->role === 'kepala_gudang') {
             $query->where('model_type', 'like', '%Product%');
         } elseif ($user->role === 'manager_bisnis') {
             $query->where(function ($q) {
                 $q->where('model_type', 'like', '%Customer%')
-                  ->orWhere('model_type', 'like', '%Order%')
-                  ->orWhere('model_type', 'like', '%PaymentLog%');
+                    ->orWhere('model_type', 'like', '%Order%')
+                    ->orWhere('model_type', 'like', '%PaymentLog%');
             });
         }
         // Filter Search
