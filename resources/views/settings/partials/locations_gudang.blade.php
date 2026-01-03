@@ -1,4 +1,3 @@
-{{-- resources/views/settings/partials/locations_gudang.blade.php --}}
 <h5>Data Gudang</h5>
 <hr>
 <div class="row">
@@ -28,10 +27,14 @@
                         <tr>
                             <td>{{ $gudang->name }}</td>
                             <td>
-                                <form action="{{ route('settings.locations.gudang.destroy', $gudang->id) }}" method="POST" onsubmit="return confirm('Yakin hapus? Menghapus gudang akan menghapus semua gate dan block di dalamnya.');">
+                                {{-- PERUBAHAN DI SINI --}}
+                                <form id="delete-gudang-{{ $gudang->id }}" action="{{ route('settings.locations.gudang.destroy', $gudang->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDelete('delete-gudang-{{ $gudang->id }}', 'Menghapus gudang akan menghapus semua gate dan block di dalamnya!')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>

@@ -37,7 +37,7 @@ class LocationController extends Controller
 
         Gudang::create($request->all());
 
-        return back()->with('success', 'Gudang baru berhasil ditambahkan.');
+        return back()->with('success', 'Gudang baru berhasil ditambahkan.')->with('active_tab', 'gudang');
     }
 
     /**
@@ -50,7 +50,7 @@ class LocationController extends Controller
             return back()->with('success', 'Gudang berhasil dihapus.');
         } catch (\Exception $e) {
             // Error ini biasanya karena Foreign Key Constraint (Gudang masih dipakai di Gate/Produk)
-            return back()->with('error', 'Gagal menghapus gudang. Pastikan gudang ini sudah kosong (tidak ada Gate atau Produk yang terdaftar di sini).');
+            return back()->with('error', 'Gagal menghapus gudang. Pastikan gudang ini sudah kosong (tidak ada Gate atau Produk yang terdaftar di sini).')->with('active_tab', 'gudang');
         }
     }
 
@@ -71,7 +71,7 @@ class LocationController extends Controller
 
         Gate::create($request->all());
 
-        return back()->with('success', 'Gate/Lorong berhasil ditambahkan.');
+        return back()->with('success', 'Gate/Lorong berhasil ditambahkan.')->with('active_tab', 'gate');
     }
 
     /**
@@ -81,9 +81,9 @@ class LocationController extends Controller
     {
         try {
             Gate::findOrFail($id)->delete();
-            return back()->with('success', 'Gate berhasil dihapus.');
+            return back()->with('success', 'Gate berhasil dihapus.')->with('active_tab', 'gate');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus Gate. Pastikan tidak ada Block/Rak yang terdaftar di Gate ini.');
+            return back()->with('error', 'Gagal menghapus Gate. Pastikan tidak ada Block/Rak yang terdaftar di Gate ini.')->with('active_tab', 'gate');
         }
     }
 
@@ -106,7 +106,7 @@ class LocationController extends Controller
 
         Block::create($request->all());
 
-        return back()->with('success', 'Block/Rak berhasil ditambahkan.');
+        return back()->with('success', 'Block/Rak berhasil ditambahkan.')->with('active_tab', 'block');
     }
 
     /**
@@ -116,9 +116,9 @@ class LocationController extends Controller
     {
         try {
             Block::findOrFail($id)->delete();
-            return back()->with('success', 'Block berhasil dihapus.');
+            return back()->with('success', 'Block berhasil dihapus.')->with('active_tab', 'block');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus Block. Pastikan tidak ada Produk yang tersimpan di Block ini.');
+            return back()->with('error', 'Gagal menghapus Block. Pastikan tidak ada Produk yang tersimpan di Block ini.')->with('active_tab', 'block');
         }
     }
 

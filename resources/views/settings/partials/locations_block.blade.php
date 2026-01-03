@@ -1,4 +1,3 @@
-{{-- resources/views/settings/partials/locations_block.blade.php --}}
 <h5>Data Block</h5>
 <hr>
 <div class="row">
@@ -41,10 +40,14 @@
                             <td>{{ $block->gate->name }}</td>
                             <td>{{ $block->gate->gudang->name }}</td>
                             <td>
-                                <form action="{{ route('settings.locations.block.destroy', $block->id) }}" method="POST" onsubmit="return confirm('Yakin hapus?');">
+                                {{-- PERUBAHAN DI SINI --}}
+                                <form id="delete-block-{{ $block->id }}" action="{{ route('settings.locations.block.destroy', $block->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDelete('delete-block-{{ $block->id }}', 'Yakin ingin menghapus block ini?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>

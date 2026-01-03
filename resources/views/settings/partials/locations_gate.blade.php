@@ -1,4 +1,3 @@
-{{-- resources/views/settings/partials/locations_gate.blade.php --}}
 <h5>Data Gate</h5>
 <hr>
 <div class="row">
@@ -39,10 +38,14 @@
                             <td>{{ $gate->name }}</td>
                             <td>{{ $gate->gudang->name }}</td>
                             <td>
-                                <form action="{{ route('settings.locations.gate.destroy', $gate->id) }}" method="POST" onsubmit="return confirm('Yakin hapus? Menghapus gate akan menghapus semua block di dalamnya.');">
+                                {{-- PERUBAHAN DI SINI --}}
+                                <form id="delete-gate-{{ $gate->id }}" action="{{ route('settings.locations.gate.destroy', $gate->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDelete('delete-gate-{{ $gate->id }}', 'Menghapus gate akan menghapus semua block di dalamnya!')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>
