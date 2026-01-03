@@ -72,11 +72,15 @@ class UserQuotaController extends Controller
     }
 
     // ... (Fungsi store, approve, updateManual biarkan tetap sama) ...
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $request->validate([
             'amount' => 'required|numeric|min:1',
-            'reason' => 'required|string',
+            'reason' => 'required|string|min:5',
+        ], [
+            'amount.required' => 'Isi jumlah limit yang diminta.',
+            'reason.required' => 'Berikan alasan kenapa butuh tambahan limit.',
+            'reason.min'      => 'Alasan terlalu singkat.',
         ]);
 
         QuotaRequest::create([
@@ -86,7 +90,7 @@ class UserQuotaController extends Controller
             'status'  => 'pending'
         ]);
 
-        return back()->with('success', 'Pengajuan limit berhasil dikirim ke Atasan.');
+        return back()->with('success', 'Permintaan limit terkirim. Tunggu persetujuan atasan.');
     }
 
     public function approve(Request $request, $id)
@@ -107,9 +111,12 @@ class UserQuotaController extends Controller
 
         DB::beginTransaction();
         try {
+            // Cek Saldo Manager Bisnis
             if ($manager->role == 'manager_bisnis') {
                 if ($manager->credit_limit_quota < $amount) {
-                    return back()->with('error', 'Limit Anda tidak cukup! Sisa limit Anda: Rp ' . number_format($manager->credit_limit_quota) . '. Silakan ajukan ke Manager Ops.');
+                    $sisaMgr = number_format($manager->credit_limit_quota, 0, ',', '.');
+                    // Pesan Error Spesifik
+                    return back()->with('error', "Saldo Limit Pribadi Anda tidak cukup (Sisa: Rp $sisaMgr). Silakan ajukan tambahan ke Manager Operasional dulu.");
                 }
                 $manager->credit_limit_quota -= $amount;
                 $manager->save();
@@ -123,10 +130,13 @@ class UserQuotaController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', 'Limit berhasil ditambahkan ke ' . $quotaReq->user->name);
+            return back()->with('success', 'Limit berhasil ditransfer ke bawahan. ✅');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            // Log error asli
+            \Illuminate\Support\Facades\Log::error("Quota Approve Error: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat transfer limit.');
         }
     }
 

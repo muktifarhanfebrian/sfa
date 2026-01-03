@@ -26,9 +26,12 @@ class LocationController extends Controller
      */
     public function storeGudang(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255|unique:gudangs,name']);
+        $request->validate(['name' => 'required|string|max:255|unique:gudangs,name'], [
+            'name.unique' => 'Nama gudang ini sudah ada.'
+        ]);
+
         Gudang::create($request->all());
-        return back()->with('success', 'Gudang berhasil ditambahkan.');
+        return back()->with('success', 'Gudang baru berhasil dibuat.');
     }
 
     /**
@@ -36,8 +39,13 @@ class LocationController extends Controller
      */
     public function destroyGudang($id)
     {
-        Gudang::findOrFail($id)->delete();
-        return back()->with('success', 'Gudang berhasil dihapus.');
+        try {
+            Gudang::findOrFail($id)->delete();
+            return back()->with('success', 'Gudang berhasil dihapus.');
+        } catch (\Exception $e) {
+            // Biasanya gagal karena masih ada produk di dalamnya (Foreign Key)
+            return back()->with('error', 'Gagal hapus! Kemungkinan masih ada produk atau gate di gudang ini.');
+        }
     }
 
     /**
@@ -47,10 +55,13 @@ class LocationController extends Controller
     {
         $request->validate([
             'gudang_id' => 'required|exists:gudangs,id',
-            'name' => 'required|string|max:255|unique:gates,name,NULL,id,gudang_id,' . $request->gudang_id,
+            'name' => 'required|string|max:255',
+        ], [
+            'gudang_id.required' => 'Pilih gudang terlebih dahulu.',
         ]);
+
         Gate::create($request->all());
-        return back()->with('success', 'Gate berhasil ditambahkan.');
+        return back()->with('success', 'Gate/Lorong berhasil ditambahkan.');
     }
 
     /**
@@ -58,8 +69,13 @@ class LocationController extends Controller
      */
     public function destroyGate($id)
     {
-        Gate::findOrFail($id)->delete();
-        return back()->with('success', 'Gate berhasil dihapus.');
+        try {
+            Gate::findOrFail($id)->delete();
+            return back()->with('success', 'Gate berhasil dihapus.');
+        } catch (\Exception $e) {
+            // Biasanya gagal karena masih ada produk di dalamnya (Foreign Key)
+            return back()->with('error', 'Gagal hapus! Kemungkinan masih ada produk atau gate di Gate ini.');
+        }
     }
 
     /**
@@ -80,8 +96,13 @@ class LocationController extends Controller
      */
     public function destroyBlock($id)
     {
-        Block::findOrFail($id)->delete();
-        return back()->with('success', 'Block berhasil dihapus.');
+        try {
+            Block::findOrFail($id)->delete();
+            return back()->with('success', 'Block berhasil dihapus.');
+        } catch (\Exception $e) {
+            // Biasanya gagal karena masih ada produk di dalamnya (Foreign Key)
+            return back()->with('error', 'Gagal hapus! Kemungkinan masih ada produk atau gate di gudang ini.');
+        }
     }
 
     /**

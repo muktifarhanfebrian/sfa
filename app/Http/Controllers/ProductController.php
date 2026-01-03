@@ -76,7 +76,16 @@ class ProductController extends Controller
     // 2. Proses Simpan Data ke Database
     public function store(Request $request)
     {
-        // 1. Validasi
+        $messages = [
+            'name.required' => 'Nama produk wajib diisi.',
+            'name.unique'   => 'Nama produk ini sudah ada di sistem.',
+            'category.required' => 'Kategori produk harus dipilih.',
+            'price.min'     => 'Harga tidak boleh minus.',
+            'stock.min'     => 'Stok awal minimal 0.',
+            'photo.max'     => 'Ukuran foto maksimal 2MB agar tidak berat.',
+            'photo.image'   => 'File harus berupa gambar (JPG, PNG).',
+        ];
+
         $request->validate([
             'name' => 'required|string|max:255|unique:products,name',
             'category' => 'required',
@@ -87,13 +96,9 @@ class ProductController extends Controller
             'block' => 'nullable',
             'description' => 'nullable',
             'photo' => [
-                'required',
-                'file',           // Pastikan ini file, bukan string
-                'image',          // Pastikan kontennya gambar (pixel), bukan teks script
-                'mimes:jpeg,png,jpg', // Ekstensi yang diizinkan
-                'max:2048',       // Maksimal 2MB (Mencegah serangan DoS storage penuh)
+                'required', 'file', 'image', 'mimes:jpeg,png,jpg', 'max:2048',
             ],
-        ]);
+        ], $messages);
 
         // 2. Siapkan Data Input
         $newData = $request->except('_token');
@@ -133,25 +138,27 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        // 1. Validasi (Tambahkan validasi image)
+        $messages = [
+            'name.required' => 'Nama produk tidak boleh kosong.',
+            'price.min'     => 'Harga harus positif.',
+            'discount_price.lt' => 'Harga diskon harus lebih murah dari harga normal.',
+            'stock.min'     => 'Stok tidak valid.',
+        ];
+
         $request->validate([
             'name' => 'required',
             'category' => 'required',
             'price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0|lt:price',
+            'discount_price' => 'nullable|numeric|min:0|lt:price', // lt: less than
             'stock' => 'required|integer|min:0',
             'lokasi_gudang' => 'nullable',
             'gate' => 'nullable',
             'block' => 'nullable',
             'description' => 'nullable',
             'photo' => [
-                'required',
-                'file',           // Pastikan ini file, bukan string
-                'image',          // Pastikan kontennya gambar (pixel), bukan teks script
-                'mimes:jpeg,png,jpg', // Ekstensi yang diizinkan
-                'max:2048',       // Maksimal 2MB (Mencegah serangan DoS storage penuh)
+                'nullable', 'file', 'image', 'mimes:jpeg,png,jpg', 'max:2048',
             ],
-        ]);
+        ], $messages);
 
         // 2. Ambil data teks dulu
         $newData = $request->only(['name', 'category', 'price', 'stock', 'lokasi_gudang', 'gate', 'block', 'description']);
@@ -193,6 +200,7 @@ class ProductController extends Controller
             return redirect()->route('products.index')
                 ->with('success', 'Permintaan edit telah dikirim ke Manager untuk disetujui.');
         }
+
 
         // 5. --- LOGIKA DIRECT UPDATE (MANAGER/KEPALA GUDANG) ---
         // Jika bukan Admin Gudang, update langsung.
@@ -236,18 +244,18 @@ class ProductController extends Controller
         $product->delete();
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
     }
+    
     // METHOD BARU: Update Tanggal Restock (Khusus Purchase)
     public function updateRestock(Request $request, $id)
     {
-        // Cek Role Purchase / Manager / Gudang
         if (!in_array(Auth::user()->role, ['purchase', 'manager_operasional', 'manager_bisnis', 'kepala_gudang'])) {
             abort(403);
         }
 
         $request->validate([
-            // Pastikan tanggal yang diinput adalah hari ini atau masa depan (tidak boleh tanggal lampau)
-            // 'after_or_equal:today' adalah kuncinya
             'restock_date' => 'required|date|after_or_equal:today',
+        ], [
+            'restock_date.after_or_equal' => 'Tanggal restock tidak boleh tanggal yang sudah lewat (harus hari ini atau masa depan).'
         ]);
 
         $product = Product::findOrFail($id);
@@ -257,6 +265,7 @@ class ProductController extends Controller
 
         return back()->with('success', 'Tanggal pemesanan stok berhasil diupdate.');
     }
+
     // METHOD BARU: Update Harga Diskon (Khusus Purchase)
     public function updateDiscount(Request $request, $id)
     {

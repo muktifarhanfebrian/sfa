@@ -24,13 +24,21 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $messages = [
+            'name.required'     => 'Nama lengkap wajib diisi.',
+            'email.required'    => 'Email wajib diisi untuk login.',
+            'email.unique'      => 'Email ini sudah dipakai oleh user lain.',
+            'password.min'      => 'Password minimal 6 karakter biar aman.',
+            'role.required'     => 'Jabatan/Role belum dipilih.',
+        ];
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'role' => 'required|string',
+            'role' => 'required',
             'daily_visit_target' => 'nullable|integer|min:0',
-        ]);
+        ], $messages);
 
         User::create([
             'name' => $request->name,
@@ -41,7 +49,7 @@ class UserController extends Controller
             'daily_visit_target' => $request->daily_visit_target ?? 0,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'Anggota tim baru berhasil ditambahkan! 🎉');
     }
 
     // --- PERBAIKAN DI SINI ---
@@ -56,13 +64,15 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $messages = [
+            'email.unique' => 'Gagal update. Email ini sudah dipakai user lain.',
+        ];
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
-            'role' => 'required|string',
-            'sales_target' => 'nullable|numeric|min:0',
-            'daily_visit_target' => 'nullable|integer|min:0',
-        ]);
+            'role' => 'required',
+        ], $messages);
 
         $data = [
             'name' => $request->name,
@@ -74,12 +84,12 @@ class UserController extends Controller
         ];
 
         if ($request->filled('password')) {
-            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+            $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
+        return redirect()->route('users.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
     public function destroy(User $user)

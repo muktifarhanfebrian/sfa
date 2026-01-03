@@ -69,6 +69,13 @@ class CustomerController extends Controller
     // 3. Simpan Toko Baru
     public function store(Request $request)
     {
+        $messages = [
+            'name.required' => 'Nama Toko wajib diisi.',
+            'phone.required' => 'Nomor HP/WA wajib diisi.',
+            'address.required' => 'Alamat lengkap wajib diisi.',
+            'category.required' => 'Kategori toko harus dipilih.',
+        ];
+
         $request->validate([
             'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string',
@@ -110,6 +117,12 @@ class CustomerController extends Controller
     // 5. Update Data
     public function update(Request $request, Customer $customer)
     {
+        $messages = [
+            'name.required' => 'Nama Toko wajib diisi.',
+            'phone.required' => 'Nomor HP/WA wajib diisi.',
+            'address.required' => 'Alamat lengkap wajib diisi.',
+            'category.required' => 'Kategori toko harus dipilih.',
+        ];
         // 1. VALIDASI (Sesuaikan dengan Form Edit yang baru)
         $request->validate([
             'name'       => 'required|string|max:255',

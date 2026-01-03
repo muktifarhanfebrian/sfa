@@ -41,31 +41,33 @@ class VisitController extends Controller
         $user = Auth::user();
         $isStoreSales = $user->role === 'sales_store';
 
-        // --- A. VALIDASI ---
-        $rules = [
-            'photo' => [
-                'required',
-                'file',           // Pastikan ini file, bukan string
-                'image',          // Pastikan kontennya gambar (pixel), bukan teks script
-                'mimes:jpeg,png,jpg', // Ekstensi yang diizinkan
-                'max:5120',       // Maksimal 5MB (Mencegah serangan DoS storage penuh)
-            ],
-            'type'  => 'required|in:existing,new',
-            'notes' => 'required|string', // Catatan wajib
+        // Custom Messages
+        $messages = [
+            'photo.required'    => 'Wajib ambil foto kunjungan/toko.',
+            'photo.max'         => 'Ukuran foto terlalu besar (maks 5MB).',
+            'latitude.required' => 'Gagal mendeteksi lokasi GPS. Pastikan GPS HP Anda aktif dan izinkan akses lokasi di browser.',
+            'notes.required'    => 'Catatan hasil kunjungan wajib diisi.',
+            'check_out_time.after' => 'Jam selesai harus lebih akhir dari jam mulai.',
+            'new_name.required' => 'Nama toko baru wajib diisi.',
+            'customer_id.required' => 'Silakan pilih customer dari daftar.',
         ];
 
-        // 1. Validasi GPS (Hanya Wajib untuk Sales Lapangan)
+        // --- A. VALIDASI ---
+        $rules = [
+            'photo' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
+            'type'  => 'required|in:existing,new',
+            'notes' => 'required|string',
+        ];
+
+        // Validasi GPS (Khusus Sales Lapangan)
         if (!$isStoreSales) {
             $rules['latitude']  = 'required';
             $rules['longitude'] = 'required';
         } else {
-            // 2. Validasi Waktu Manual (KHUSUS Sales Store)
-            // Agar bisa input jam pelayanan yang lalu
             $rules['check_in_time']  = 'required|date';
             $rules['check_out_time'] = 'required|date|after:check_in_time';
         }
 
-        // 3. Validasi Tipe Customer
         if ($request->type == 'new') {
             $rules['new_name']    = 'required|string|max:255';
             $rules['new_phone']   = 'required|string|max:20';
@@ -75,7 +77,7 @@ class VisitController extends Controller
             $rules['customer_id'] = 'required|exists:customers,id';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, $messages);
 
         // --- B. LOGIKA WAKTU & DURASI ---
         if ($isStoreSales) {
@@ -161,7 +163,7 @@ class VisitController extends Controller
             'notes'            => $request->notes,
         ]);
 
-        return redirect()->route('dashboard')->with('success', $msg);
+        return redirect()->route('dashboard')->with('success', 'Laporan kunjungan berhasil disimpan! Terima kasih kerja kerasnya. 💪');
     }
 
     // ==========================================================
@@ -372,15 +374,20 @@ class VisitController extends Controller
     // 2. FUNGSI MENYIMPAN DATA (UPDATE) - INI YANG DI AKSES TOMBOL DI HALAMAN FORM
     public function update(Request $request, $id)
     {
-        $visit = Visit::findOrFail($id);
+        $visit = \App\Models\Visit::findOrFail($id);
 
-        // Validasi Input (Wajib Foto & Lokasi)
+        $messages = [
+            'photo.required'    => 'Foto bukti selesai kunjungan wajib ada.',
+            'latitude.required' => 'Lokasi GPS saat check-out tidak terdeteksi.',
+            'notes.required'    => 'Tuliskan hasil/kesimpulan kunjungan ini.',
+        ];
+
         $request->validate([
-            'photo' => 'required|image|max:5120', // Maks 5MB
+            'photo' => 'required|image|max:5120',
             'latitude' => 'required',
             'longitude' => 'required',
             'notes' => 'nullable|string',
-        ]);
+        ], $messages);
 
         // Proses Upload Foto
         $path = null;
@@ -398,7 +405,7 @@ class VisitController extends Controller
             'status' => 'completed',
         ]);
 
-        return redirect()->route('dashboard')->with('success', 'Kunjungan Selesai! Terima kasih.');
+        return redirect()->route('dashboard')->with('success', 'Kunjungan selesai. Data tersimpan. ✅');
     }
     // ==========================================================
     // 4. FITUR DETAIL (SHOW) - Agar Route Resource Tidak Error

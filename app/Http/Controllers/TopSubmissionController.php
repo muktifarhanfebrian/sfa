@@ -36,7 +36,13 @@ class TopSubmissionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['customer_id' => 'required|exists:customers,id']);
+        $messages = [
+            'customer_id.required' => 'Pilih customer yang mau diajukan.',
+            'limit_only.min'       => 'Nominal limit tidak boleh minus.',
+            'days_only.min'        => 'Jumlah hari tenor minimal 1 hari.',
+        ];
+
+        $request->validate(['customer_id' => 'required|exists:customers,id'], $messages);
 
         $customer = Customer::findOrFail($request->customer_id);
         // Ambil tipe dari hidden input ('limit', 'days', atau 'both')
@@ -83,7 +89,7 @@ class TopSubmissionController extends Controller
             'notes'            => "Jenis Pengajuan: " . $noteType,
         ]);
 
-        return redirect()->route('top-submissions.index')->with('success', 'Pengajuan berhasil dikirim.');
+        return redirect()->route('top-submissions.index')->with('success', 'Pengajuan berhasil dikirim ke Manager.');
     }
 
 
@@ -100,24 +106,27 @@ class TopSubmissionController extends Controller
     // UPDATE LOGIC APPROVE (PENTING!)
     public function approve($id)
     {
-        $submission = TopSubmission::findOrFail($id);
+        $submission = \App\Models\TopSubmission::findOrFail($id);
         $salesUser = $submission->sales;
         $customer = $submission->customer;
 
         if ($submission->status !== 'pending') {
-            return back()->with('error', 'Pengajuan ini sudah diproses.');
+            return back()->with('error', 'Pengajuan ini sudah pernah diproses sebelumnya.');
         }
 
-        // HITUNG SELISIH (DELTA)
-        // Berapa tambahan limit yang diminta dibanding limit customer sekarang?
+        // HITUNG SELISIH
         $currentLimit = $customer->credit_limit;
         $requestedLimit = $submission->submission_limit;
         $neededQuota = $requestedLimit - $currentLimit;
 
-        // Jika butuh tambahan kuota (neededQuota > 0), cek saldo sales
+        // Cek Saldo Manager/Sales (Logic Anda: Sales yang dipotong kuotanya)
         if ($neededQuota > 0) {
+            // Gunakan format rupiah agar jelas
+            $sisaQuota = number_format($salesUser->credit_limit_quota, 0, ',', '.');
+            $butuhQuota = number_format($neededQuota, 0, ',', '.');
+
             if ($salesUser->credit_limit_quota < $neededQuota) {
-                return back()->with('error', "Gagal! Sisa kuota kredit Sales tidak cukup untuk penambahan Rp " . number_format($neededQuota));
+                return back()->with('error', "Gagal! Sisa kuota kredit Sales ($salesUser->name) hanya Rp $sisaQuota. Tidak cukup untuk menambah Rp $butuhQuota.");
             }
         }
 
@@ -143,7 +152,7 @@ class TopSubmissionController extends Controller
             ]);
         });
 
-        return back()->with('success', 'TOP Disetujui! Data customer diperbarui.');
+        return back()->with('success', 'Pengajuan DISETUJUI. Limit customer berhasil diperbarui. ✅');
     }
 
 

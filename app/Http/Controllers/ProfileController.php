@@ -30,6 +30,12 @@ class ProfileController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        $messages = [
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.max'   => 'Ukuran foto maksimal 2MB.',
+            'email.unique'=> 'Email ini sudah digunakan orang lain.',
+        ];
+
         // 1. Validasi
         $request->validate([
             'name'  => ['required', 'string', 'max:255'],
@@ -42,7 +48,7 @@ class ProfileController extends Controller
                 'mimes:jpeg,png,jpg', // Ekstensi yang diizinkan
                 'max:2028',       // Maksimal 2MB (Mencegah serangan DoS storage penuh)
             ],
-        ]);
+        ], $messages);
 
         // 2. Update Data Dasar
         $user->name  = $request->input('name');
@@ -69,7 +75,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return back()->with('success', 'Profil berhasil diperbarui!');
+        return back()->with('success', 'Profil berhasil diperbarui.');
     }
 
     /**
@@ -77,10 +83,18 @@ class ProfileController extends Controller
      */
     public function updatePassword(Request $request)
     {
+        $messages = [
+            'current_password.required' => 'Masukkan password lama Anda.',
+            'current_password.current_password' => 'Password lama yang Anda masukkan salah.',
+            'password.required' => 'Password baru wajib diisi.',
+            'password.min'      => 'Password baru minimal 6 karakter.',
+            'password.confirmed'=> 'Konfirmasi password baru tidak cocok.',
+        ];
+
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password'         => ['required', 'min:6', 'confirmed'],
-        ]);
+        ], $messages);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -89,6 +103,6 @@ class ProfileController extends Controller
             'password' => Hash::make($request->input('password'))
         ]);
 
-        return back()->with('success', 'Password berhasil diganti! Jangan lupa dicatat.');
+        return back()->with('success', 'Password berhasil diganti! Harap diingat baik-baik.');
     }
 }

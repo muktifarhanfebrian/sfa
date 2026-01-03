@@ -68,5 +68,49 @@
     {{-- 3. [PENTING] TEMPAT MENAMPUNG SCRIPT DARI HALAMAN LAIN --}}
     @stack('scripts')  {{-- <--- TAMBAHKAN BARIS INI!!! --}}
 
+
+    {{-- CDN SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // 1. Notifikasi SUKSES (Dari Controller with('success'))
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        @endif
+
+        // 2. Notifikasi ERROR (Dari Controller with('error'))
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: "{{ session('error') }}",
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Tutup'
+            });
+        @endif
+
+        // 3. Notifikasi VALIDASI FORM (Jika ada input salah/kosong)
+        @if($errors->any())
+            var errorMessages = "";
+            @foreach ($errors->all() as $error)
+                errorMessages += "• {{ $error }}<br>";
+            @endforeach
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Periksa Inputan Anda',
+                html: errorMessages, // Pakai HTML biar bisa list ke bawah
+                confirmButtonColor: '#f0ad4e',
+                confirmButtonText: 'Perbaiki'
+            });
+        @endif
+    </script>
 </body>
 </html>
+

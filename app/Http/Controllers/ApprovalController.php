@@ -187,10 +187,16 @@ class ApprovalController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', 'Permintaan telah DISETUJUI.');
+            return back()->with('success', 'Permintaan telah DISETUJUI. ✅');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error System: ' . $e->getMessage());
+
+            // Log error detail untuk IT
+            \Illuminate\Support\Facades\Log::error("Approval Error ID {$approval->id}: " . $e->getMessage());
+
+            // Pesan ke User
+            return back()->with('error', 'Gagal memproses persetujuan. Terjadi kesalahan data internal.');
         }
     }
 

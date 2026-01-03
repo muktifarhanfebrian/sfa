@@ -16,26 +16,32 @@ class AuthController extends Controller
     // 2. Proses Login
     public function login(Request $request)
     {
-        // Validasi input
-        $credentials = $request->validate([
+        // 1. Validasi Input (Bahasa Indonesia)
+        $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+        ], [
+            'email.required' => 'Masukkan alamat email Anda.',
+            'email.email'    => 'Format email tidak valid.',
+            'password.required' => 'Masukkan kata sandi.',
         ]);
 
-        // Coba login menggunakan Auth Facade
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate(); // Security: Cegah session fixation
+        // 2. Coba Login
+        if (Auth::attempt($request->only('email', 'password'))) {
+            $request->session()->regenerate();
 
-            // Cek role user (opsional, untuk redirect nanti)
-            $role = Auth::user()->role;
+            // Pesan selamat datang (Opsional, bisa dihapus jika ingin hening)
+            // return redirect()->intended('dashboard');
 
-            return redirect()->intended('dashboard');
+            // Atau pakai notifikasi manis:
+            $user = Auth::user();
+            return redirect()->intended('dashboard')
+                ->with('success', "Selamat datang kembali, {$user->name}! 👋");
         }
 
-        // Jika gagal login
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->onlyInput('email');
+        // 3. Jika Gagal (Gunakan 'error' agar muncul SweetAlert Merah)
+        // Jangan gunakan 'withErrors' karena itu biasanya untuk validasi form (kuning)
+        return back()->with('error', 'Email atau Password salah. Silakan cek kembali.');
     }
 
     // 3. Proses Logout

@@ -104,15 +104,24 @@ class ReceivableController extends Controller
     }
 
     // 7. STORE PAYMENT (FIX: FORCE APPROVAL UNTUK SEMUA ROLE)
+    // 7. STORE PAYMENT (FIX: FORCE APPROVAL UNTUK SEMUA ROLE)
     public function store(Request $request, $id)
     {
-        // 1. Validasi Input
+        // 1. Validasi Input (Custom Message Bahasa Indonesia)
+        $messages = [
+            'amount.required'       => 'Nominal pembayaran wajib diisi.',
+            'amount.min'            => 'Nominal tidak valid (minimal 1 rupiah).',
+            'payment_date.required' => 'Tanggal pembayaran wajib diisi.',
+            'proof_file.image'      => 'Bukti transfer harus berupa gambar (JPG/PNG).',
+            'proof_file.max'        => 'Ukuran bukti foto maksimal 5MB.',
+        ];
+
         $request->validate([
             'amount'         => 'required|numeric|min:1',
             'payment_date'   => 'required|date',
             'payment_method' => 'required',
-            'proof_file'     => 'nullable|image|max:5120' // Max 5MB
-        ]);
+            'proof_file'     => 'nullable|image|max:5120'
+        ], $messages);
 
         $order = Order::findOrFail($id);
 
@@ -124,7 +133,11 @@ class ReceivableController extends Controller
         $sisaHutang = $order->total_price - $paidOrPending;
 
         if ($request->amount > $sisaHutang) {
-            return back()->with('error', 'Nominal melebihi sisa hutang (termasuk yang menunggu approval).');
+            // Format angka biar enak dibaca user
+            $sisaFmt = number_format($sisaHutang, 0, ',', '.');
+
+            // Error ini akan muncul di SweetAlert Merah (Warning)
+            return back()->with('error', "Nominal pembayaran melebihi sisa hutang! Sisa tagihan saat ini (termasuk yang sedang pending) hanya: Rp $sisaFmt");
         }
 
         // 3. Handle File Upload (WEBP LOGIC)
@@ -138,10 +151,6 @@ class ReceivableController extends Controller
 
         DB::beginTransaction();
         try {
-            // --- PERUBAHAN UTAMA: HAPUS LOGIC AUTO APPROVE ---
-            // Siapapun yang input (Sales/Kasir/Manager), status awal wajib 'pending_approval'
-            // Ini memaksa Manager masuk menu Approval -> Klik Setujui -> Limit Kembali.
-
             // A. Create Payment Log
             $paymentLog = PaymentLog::create([
                 'order_id'       => $order->id,
@@ -166,19 +175,27 @@ class ReceivableController extends Controller
 
             DB::commit();
 
-            // Pesan disesuaikan
-            $msg = 'Pembayaran disimpan. ';
+            // 4. PESAN SUKSES (HTML Friendly)
+            // Gunakan <br> dan <small> agar SweetAlert merender pesan lebih cantik
+            $msg = "Pembayaran berhasil disimpan! ✅";
+
             if (in_array(Auth::user()->role, ['manager_bisnis', 'manager_operasional', 'superadmin'])) {
-                $msg .= 'Silakan menuju menu "Persetujuan" untuk memverifikasi dan mengembalikan limit kredit.';
+                $msg .= "<br><small>Karena Anda Manager, silakan langsung verifikasi di menu <b>Persetujuan</b> agar limit kembali.</small>";
             } else {
-                $msg .= 'Menunggu verifikasi Manager.';
+                $msg .= "<br><small>Data telah dikirim ke Manager untuk diverifikasi.</small>";
             }
 
             return back()->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
+
+            // 5. PESAN ERROR YANG AMAN
+            // Log error asli di server (untuk Anda/IT cek nanti)
+            \Illuminate\Support\Facades\Log::error("Error Store Payment: " . $e->getMessage());
+
+            // Tampilkan pesan umum yang sopan ke user
+            return back()->with('error', 'Terjadi kesalahan sistem saat menyimpan pembayaran. Silakan coba lagi atau hubungi IT.');
         }
     }
 

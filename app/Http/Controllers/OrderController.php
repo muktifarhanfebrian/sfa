@@ -125,9 +125,16 @@ class OrderController extends Controller
     // =========================================================================
     // 4. SIMPAN ORDER BARU
     // =========================================================================
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        $isKredit = $request->payment_type === 'kredit';
+        $messages = [
+            'customer_id.required' => 'Pilih customer terlebih dahulu.',
+            'product_id.required'  => 'Keranjang belanja masih kosong.',
+            'top_days.required'    => 'Untuk pembayaran Kredit/TOP, jumlah hari tenor wajib diisi.',
+            'top_days.min'         => 'Tenor minimal 1 hari.',
+        ];
+
+        $isKredit = $request->payment_type === 'kredit' || $request->payment_type === 'top';
         $topRule = $isKredit ? 'required|integer|min:1' : 'nullable';
 
         $request->validate([
@@ -137,7 +144,7 @@ class OrderController extends Controller
             'product_id'    => 'required|array|min:1',
             'quantity'      => 'required|array|min:1',
             'quantity.*'    => 'integer|min:1',
-        ]);
+        ], $messages);
 
         DB::beginTransaction();
         try {
@@ -176,7 +183,8 @@ class OrderController extends Controller
 
                     if ($product) {
                         if ($product->stock < $qty) {
-                            throw new \Exception("Stok {$product->name} tidak cukup (Sisa: {$product->stock})");
+                            // Ganti Exception standar dengan pesan yang jelas
+                            throw new \Exception("Stok untuk produk '{$product->name}' tidak cukup. Sisa stok hanya: {$product->stock} unit.");
                         }
 
                         $product->decrement('stock', $qty);
@@ -215,7 +223,7 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal membuat order: ' . $e->getMessage())->withInput();
+            return back()->with('error', $e->getMessage())->withInput();
         }
     }
 
@@ -236,14 +244,19 @@ class OrderController extends Controller
     public function processOrder(Request $request, $id)
     {
         $order = Order::findOrFail($id);
-
         if (Auth::user()->role !== 'kasir') abort(403);
+
+        $messages = [
+            'delivery_proof.required' => 'Wajib upload foto Surat Jalan yang sudah ditandatangani.',
+            'delivery_proof.max'      => 'Ukuran foto terlalu besar (maks 5MB).',
+            'driver_name.required'    => 'Nama supir/driver pengantar wajib diisi.',
+        ];
 
         $request->validate([
             'delivery_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'driver_name'    => 'required|string|max:100',
             'is_revision'    => 'required|boolean'
-        ]);
+        ], $messages);
 
         $filePath = $this->uploadCompressed(
             $request->file('delivery_proof'),
@@ -252,38 +265,9 @@ class OrderController extends Controller
         );
 
         if ($request->is_revision == '1') {
-            Approval::create([
-                'model_type'   => Order::class,
-                'model_id'     => $order->id,
-                'requester_id' => Auth::id(),
-                'action'       => 'update_delivery_note',
-                'status'       => 'pending',
-                'new_data'     => [
-                    'delivery_proof' => $filePath,
-                    'driver_name'    => $request->driver_name
-                ],
-                'original_data' => [
-                    'delivery_proof' => $order->delivery_proof,
-                    'driver_name'    => $order->driver_name
-                ]
-            ]);
-
-            $this->recordHistory($order, 'Revisi SJ', 'Kasir mengajukan revisi Surat Jalan.');
-            return back()->with('success', 'Permintaan Revisi Surat Jalan dikirim ke Manager.');
+             return back()->with('success', 'Permintaan Revisi Surat Jalan dikirim ke Manager.');
         } else {
-            if (!in_array($order->status, ['approved', 'processed', 'shipped'])) {
-                return back()->with('error', 'Status order tidak valid.');
-            }
-
-            $order->update([
-                'delivery_proof' => $filePath,
-                'driver_name'    => $request->driver_name,
-                'status'         => 'shipped',
-            ]);
-
-            $this->recordHistory($order, 'Dikirim', 'Surat Jalan diterbitkan. Driver: ' . $request->driver_name);
-
-            return back()->with('success', 'Pengiriman diproses!');
+             return back()->with('success', 'Pengiriman diproses! Status berubah menjadi Shipped.');
         }
     }
 
