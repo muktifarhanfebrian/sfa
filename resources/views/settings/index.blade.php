@@ -7,35 +7,44 @@
         <h1 class="h3 fw-bold text-gray-800">Pengaturan Situs</h1>
     </div>
 
+    {{-- LOGIKA TAB AKTIF --}}
+    @php
+        // Default ke 'general' jika tidak ada session active_tab
+        $activeTab = session('active_tab', 'general');
+    @endphp
+
     <div class="card shadow border-0">
         <div class="card-header bg-white">
             <ul class="nav nav-tabs card-header-tabs" id="settingTabs" role="tablist">
+                {{-- Tab General --}}
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
-                        type="button">
+                    <button class="nav-link {{ $activeTab == 'general' ? 'active' : '' }} fw-bold"
+                            id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
                         <i class="bi bi-shop me-2"></i> Identitas Toko
                     </button>
                 </li>
+                {{-- Tab Kategori Produk --}}
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" id="category-tab" data-bs-toggle="tab" data-bs-target="#category"
-                        type="button">
+                    <button class="nav-link {{ $activeTab == 'category' ? 'active' : '' }} fw-bold"
+                            id="category-tab" data-bs-toggle="tab" data-bs-target="#category" type="button">
                         <i class="bi bi-tags me-2"></i> Kategori Produk
                     </button>
                 </li>
-                {{-- 🔥 TAB BARU: KATEGORI CUSTOMER 🔥 --}}
+                {{-- Tab Kategori Customer --}}
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" id="cust-cat-tab" data-bs-toggle="tab" data-bs-target="#cust-cat"
-                        type="button">
+                    <button class="nav-link {{ $activeTab == 'cust-cat' ? 'active' : '' }} fw-bold"
+                            id="cust-cat-tab" data-bs-toggle="tab" data-bs-target="#cust-cat" type="button">
                         <i class="bi bi-people me-2"></i> Kategori Customer
                     </button>
                 </li>
             </ul>
         </div>
+
         <div class="card-body">
             <div class="tab-content" id="settingTabsContent">
 
                 {{-- TAB 1: IDENTITAS TOKO --}}
-                <div class="tab-pane fade show active" id="general" role="tabpanel">
+                <div class="tab-pane fade {{ $activeTab == 'general' ? 'show active' : '' }}" id="general" role="tabpanel">
                     <form action="{{ route('settings.updateGeneral') }}" method="POST">
                         @csrf
                         <div class="mb-3">
@@ -64,12 +73,12 @@
                 </div>
 
                 {{-- TAB 2: KATEGORI PRODUK --}}
-                <div class="tab-pane fade" id="category" role="tabpanel">
+                <div class="tab-pane fade {{ $activeTab == 'category' ? 'show active' : '' }}" id="category" role="tabpanel">
                     <div class="row">
                         <div class="col-md-5 mb-4">
                             <div class="card bg-light border-0">
                                 <div class="card-body">
-                                    <h6 class="fw-bold mb-3">Tambah Kategori Baru</h6>
+                                    <h6 class="fw-bold mb-3">Tambah Kategori Produk</h6>
                                     <form action="{{ route('settings.storeCategory') }}" method="POST">
                                         @csrf
                                         <div class="input-group mb-3">
@@ -82,7 +91,7 @@
                             </div>
                         </div>
                         <div class="col-md-7">
-                            <h6 class="fw-bold mb-3">Daftar Kategori Aktif</h6>
+                            <h6 class="fw-bold mb-3">Daftar Kategori Produk</h6>
                             <table class="table table-bordered table-hover bg-white">
                                 <thead class="table-light">
                                     <tr>
@@ -95,12 +104,12 @@
                                         <tr>
                                             <td>{{ $cat->name }}</td>
                                             <td class="text-center">
-                                                <form action="{{ route('settings.destroyCategory', $cat->id) }}"
-                                                    method="POST" onsubmit="return confirm('Yakin hapus kategori ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"><i
-                                                            class="bi bi-trash"></i></button>
+                                                <form id="del-cat-{{ $cat->id }}" action="{{ route('settings.destroyCategory', $cat->id) }}" method="POST">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="confirmDelete('del-cat-{{ $cat->id }}', 'Hapus kategori produk ini?')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -110,10 +119,10 @@
                         </div>
                     </div>
                 </div>
-                {{-- ISI TAB BARU: KATEGORI CUSTOMER --}}
-                <div class="tab-pane fade" id="cust-cat" role="tabpanel">
+
+                {{-- TAB 3: KATEGORI CUSTOMER --}}
+                <div class="tab-pane fade {{ $activeTab == 'cust-cat' ? 'show active' : '' }}" id="cust-cat" role="tabpanel">
                     <div class="row">
-                        {{-- Form Tambah --}}
                         <div class="col-md-5 mb-4">
                             <div class="card bg-light border-0">
                                 <div class="card-body">
@@ -122,7 +131,7 @@
                                         @csrf
                                         <div class="input-group mb-3">
                                             <input type="text" name="name" class="form-control"
-                                                placeholder="Contoh: Toko Bangunan / Kontraktor" required>
+                                                placeholder="Contoh: Toko Bangunan" required>
                                             <button class="btn btn-primary" type="submit">Tambah</button>
                                         </div>
                                         <small class="text-muted">Digunakan untuk mengelompokkan jenis pelanggan.</small>
@@ -131,7 +140,6 @@
                             </div>
                         </div>
 
-                        {{-- Tabel List --}}
                         <div class="col-md-7">
                             <h6 class="fw-bold mb-3">Daftar Kategori Customer</h6>
                             <table class="table table-bordered table-hover bg-white">
@@ -146,21 +154,18 @@
                                         <tr>
                                             <td>{{ $custCat->name }}</td>
                                             <td class="text-center">
-                                                <form
-                                                    action="{{ route('settings.destroyCustomerCategory', $custCat->id) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Hapus kategori customer ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"><i
-                                                            class="bi bi-trash"></i></button>
+                                                <form id="del-cust-{{ $custCat->id }}" action="{{ route('settings.destroyCustomerCategory', $custCat->id) }}" method="POST">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="confirmDelete('del-cust-{{ $custCat->id }}', 'Hapus kategori customer ini?')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="2" class="text-center text-muted py-3">Belum ada data kategori
-                                                customer.</td>
+                                            <td colspan="2" class="text-center text-muted py-3">Belum ada data.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -168,7 +173,29 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    function confirmDelete(formId, message) {
+        Swal.fire({
+            title: 'Yakin hapus?',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+</script>
+@endpush
